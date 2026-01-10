@@ -13,8 +13,6 @@
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "hardware/clocks.h"
-
-
 CU_REGISTER_DEBUG_PINS(audio_timing)
 
 // ---- select at most one ---
@@ -42,6 +40,19 @@ audio_format_t pio_i2s_consumer_format;
 audio_buffer_format_t pio_i2s_consumer_buffer_format = {
         .format = &pio_i2s_consumer_format,
 };
+
+//Edits to add the callback function
+//including the callback function pointer and register callback function
+static void(*user_audio_callback)(void);
+static bool start_audio = false;
+
+void register_audio_callback(void (*audio_cb)(void)){
+    user_audio_callback = audio_cb;
+}
+
+void enable_audio(){
+    start_audio = true;
+}
 
 static void __isr __time_critical_func(audio_i2s_dma_irq_handler)();
 
@@ -346,6 +357,13 @@ static inline void audio_start_dma_transfer() {
 
 // irq handler for DMA
 void __isr __time_critical_func(audio_i2s_dma_irq_handler)() {
+    //Edit: added user_audio_callback function
+    if(!start_audio)
+        return;
+    if (user_audio_callback){
+        user_audio_callback();
+    }
+    //end edit
 #if PICO_AUDIO_I2S_NOOP
     assert(false);
 #else
