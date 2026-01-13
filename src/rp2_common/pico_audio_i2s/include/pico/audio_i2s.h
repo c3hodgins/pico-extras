@@ -183,7 +183,6 @@ void audio_i2s_set_enabled(bool enabled);
 //Edit
 //Added register user audio callback function
 void register_audio_callback(void (*audio_cb)(void));
-void enable_audio();
 #ifdef __cplusplus
 }
 #endif

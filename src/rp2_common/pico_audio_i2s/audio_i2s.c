@@ -44,14 +44,9 @@ audio_buffer_format_t pio_i2s_consumer_buffer_format = {
 //Edits to add the callback function
 //including the callback function pointer and register callback function
 static void(*user_audio_callback)(void);
-static bool start_audio = false;
 
 void register_audio_callback(void (*audio_cb)(void)){
     user_audio_callback = audio_cb;
-}
-
-void enable_audio(){
-    start_audio = true;
 }
 
 static void __isr __time_critical_func(audio_i2s_dma_irq_handler)();
@@ -354,11 +349,12 @@ static inline void audio_start_dma_transfer() {
     dma_channel_set_config(shared_state.dma_channel, &c, false);
     dma_channel_transfer_from_buffer_now(shared_state.dma_channel, ab->buffer->bytes, ab->sample_count);
 }
+static bool audio_enabled;
 
 // irq handler for DMA
 void __isr __time_critical_func(audio_i2s_dma_irq_handler)() {
     //Edit: added user_audio_callback function
-    if(!start_audio)
+    if(!audio_enabled)
         return;
     if (user_audio_callback){
         user_audio_callback();
@@ -384,7 +380,6 @@ void __isr __time_critical_func(audio_i2s_dma_irq_handler)() {
 #endif
 }
 
-static bool audio_enabled;
 
 void audio_i2s_set_enabled(bool enabled) {
     if (enabled != audio_enabled) {
